@@ -1,12 +1,12 @@
 # Roblox Studio MCP Gateway
 
-`mcp-roblox` is a Python Model Context Protocol (MCP) server for Roblox Studio. It gives OpenCode and other MCP clients tools to inspect a place, edit Luau and instance properties, work with Creator Store assets, and run and diagnose playtests.
+`mcp-roblox` is a Python Model Context Protocol (MCP) server for Roblox Studio. It works with MCP clients that can launch a local server over `stdio`. Use it to inspect a place, edit Luau and instance properties, work with Creator Store assets, and diagnose playtests.
 
 The gateway adds an edit planner, dry runs for common writes, and a playtest summary based on runtime logs. It uses [Chrrxs's Roblox Studio bridge and plugin](https://github.com/Chrrxs/robloxstudio-mcp) to interact with Studio, and calls Roblox's public APIs for engine documentation and catalog search.
 
 ```mermaid
 flowchart LR
-    Client[OpenCode or another MCP client] <-->|stdio| Gateway[Python MCP gateway]
+    Client["MCP client"] <-->|stdio| Gateway[Python MCP gateway]
     Gateway <-->|Local HTTP| Bridge[Chrrxs bridge]
     Bridge <--> Studio[Roblox Studio plugin]
     Gateway -.->|Docs and asset search| APIs[Public Roblox APIs]
@@ -34,7 +34,7 @@ The gateway exposes 33 tools.
 
 ## Quick start
 
-1. From the repository directory, install the Python gateway in a virtual environment.
+1. From the repository directory, install the Python gateway in its own virtual environment.
 
    ```bash
    python -m venv .venv
@@ -51,23 +51,33 @@ The gateway exposes 33 tools.
 
 3. Restart Roblox Studio, open a place, and verify the connection in **Plugins → MCP Server**.
 
-4. Register the installed `mcp-roblox` executable in your MCP client as a local stdio server. For OpenCode v2, use the following `opencode.json` example and replace the executable path. [OpenCode MCP configuration](https://opencode.ai/docs/mcp-servers/)
+## Configure your MCP client
 
-   ```json
-   {
-     "$schema": "https://opencode.ai/config.json",
-     "mcp": {
-       "servers": {
-         "roblox": {
-           "type": "local",
-           "command": ["/absolute/path/to/mcp-roblox/.venv/bin/mcp-roblox"]
-         }
-       }
-     }
-   }
-   ```
+Add a local **stdio** server using the absolute path to the installed executable. The client starts the Python gateway. The Studio bridge runs separately.
 
-5. Call `roblox_status` and check that the bridge reports `plugin_connected: true`. Try a read-only request such as “Describe the open place and list the top-level instances.”
+| Field | Value |
+| --- | --- |
+| Name | `roblox` |
+| Command on Linux and macOS | `/path/to/project/.venv/bin/mcp-roblox` |
+| Command on Windows | `C:\path\to\project\.venv\Scripts\mcp-roblox.exe` |
+| Arguments | None |
+
+Example for Cursor in `mcp.json`. Replace the executable path.
+
+```json
+{
+  "mcpServers": {
+    "roblox": {
+      "type": "stdio",
+      "command": "/path/to/project/.venv/bin/mcp-roblox"
+    }
+  }
+}
+```
+
+Use the same executable in other clients that support stdio. [Cursor](https://cursor.com/docs/mcp) · [VS Code with Copilot](https://code.visualstudio.com/docs/agents/reference/mcp-configuration) · [OpenCode](https://opencode.ai/docs/mcp-servers/)
+
+Call `roblox_status` and check for `plugin_connected: true`. Try a read-only request such as “Describe the open place and list the top-level instances.”
 
 ## Configuration
 
@@ -77,7 +87,7 @@ The gateway exposes 33 tools.
 | `ROBLOX_BRIDGE_TOKEN_FILE` | `~/.robloxstudio-mcp/auth-token` | Path to the bridge token file. |
 | `MCP_PLUGINS_DIR` | Vinegar's default Studio plugins directory | Directory where the gateway checks for `MCPPlugin.rbxmx`. Set this to the active plugins folder when using another Studio installation or Wine prefix. |
 
-For an OpenCode local server, set any required overrides in the server's `environment` object. The MCP client starts the gateway via stdio and the gateway contacts the bridge separately.
+Configure overrides in your MCP client's environment settings for the local server.
 
 ## Editing and playtesting
 
@@ -100,7 +110,7 @@ For an OpenCode local server, set any required overrides in the server's `enviro
 
 ## Development
 
-The test suite exercises validation and backend requests with mocks. It runs without opening Studio.
+The test suite exercises validation and backend requests with mocks. The MCP SDK verified the stdio connection and tool catalog. Individual clients and a live Studio session still need verification.
 
 ```bash
 .venv/bin/python -m pip install pytest
