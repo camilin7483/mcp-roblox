@@ -1,0 +1,27 @@
+# Python caches and environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Build output
+build/
+dist/
+*.egg-info/
+
+# Local settings, credentials, and Studio files
+.env
+.env.*
+!.env.example
+auth-token
+*.key
+*.pem
+credentials.json
+secrets.yaml
+config.local.*
+backups/
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
